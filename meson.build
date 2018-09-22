@@ -37,7 +37,7 @@ run_target('ardup',
   command : [avrdude,
   '-C/usr/share/arduino/hardware/tools/avrdude.conf',
   '-v', '-v', '-v', '-v',
-  '-patmega328p', '-carduino', '-P/dev/ttyACM0', '-b115200',
+  '-patmega328p', '-carduino', '-P/dev/ttyACM0', '-b57600',
   '-D', '-Uflash:w:@0@:i'.format(hex.full_path())],
   depends : hex,
 )
