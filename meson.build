@@ -1,4 +1,4 @@
-project('arduino blink', 'c', 'cpp',
+project('arduino relay-board', 'c', 'cpp',
   default_options : ['buildtype=minsize',
                      'b_lto=true',
                      ],
@@ -8,15 +8,15 @@ assert(meson.is_cross_build(), 'Arduino projects can only be built in a cross bu
 
 ardu_src = meson.get_cross_property('ardu_src')
 
-exe = executable('blink', ['blink.cpp'] + ardu_src,
+exe = executable('relay-board', ['relay-board.cpp'] + ardu_src,
   link_args : '-lm')
 
 objcopy = find_program('avr-objcopy')
 avrdude = find_program('avrdude')
 
-eep = custom_target('blink.eep',
+eep = custom_target('relay-board.eep',
   input : exe,
-  output : 'blink.eep',
+  output : 'relay-board.eep',
   command : [objcopy, '-O', 'ihex', '-j', '.eeprom',
     '--set-section-flags=.eeprom=alloc,load',
     '--no-change-warnings', '--change-section-lma',
@@ -24,9 +24,9 @@ eep = custom_target('blink.eep',
   ]
 )
 
-hex = custom_target('blink.hex',
+hex = custom_target('relay-board.hex',
   input : exe,
-  output : 'blink.hex',
+  output : 'relay-board.hex',
   command : [objcopy, '-O', 'ihex', '-R', '.eeprom',
     '@INPUT@', '@OUTPUT@',
   ],
