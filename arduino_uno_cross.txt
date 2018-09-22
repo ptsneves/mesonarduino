@@ -2,6 +2,8 @@
 c = '/usr/bin/avr-gcc'
 cpp = '/usr/bin/avr-g++'
 ar = '/usr/bin/avr-ar'
+nm = '/usr/bin/avr-nm'
+ranlib = '/usr/bin/avr-ranlib'
 strip = '/usr/bin/avr-strip'
 
 [properties]
