@@ -21,31 +21,90 @@ const uint8_t board_pin = 11;
 #define MAX_STRLEN 12
 #define SEPARATOR '\r'
 
-void printHelp() {
+enum PinLogicType {
+  ACTIVE_LOW,
+  ACTIVE_HIGH
+};
+
+enum PinValueType {
+  OFF = 0,
+  ON = 1
+};
+
+struct PinData {
+  const char* name_on;
+  const char* name_off;
+  uint8_t pin;
+  PinLogicType logic;
+  PinValueType value;
+};
+
+void changePin(PinData& pin, PinValueType state) {
+  const char* name = (state == ON ? pin.name_on : pin.name_off);
+  uint8_t digital_write_value = 0;
+
+  pin.value = state;
+  if (pin.logic == ACTIVE_LOW) {
+    digital_write_value = (state == ON ? LOW : HIGH);
+  }
+  else {
+    digital_write_value = (state == ON ? HIGH : LOW);
+  }
+  digitalWrite(pin.pin, digital_write_value);
+
+  Serial.print("Success: ");
+  Serial.println(name);
+}
+
+void printHelp(const PinData pin_list[], const size_t pins_count) {
   Serial.println("Welcome. Commands available are:");
   Serial.print("Separator is: ");
   Serial.println(SEPARATOR);
-  Serial.println(CAMERA_ON);
-  Serial.println(CAMERA_OFF);
-  Serial.println(BOARD_ON);
-  Serial.println(BOARD_OFF);
+  for (size_t i = 0; i < pins_count; i++) {
+    Serial.println(pin_list[i].name_on);
+    Serial.println(pin_list[i].name_off);
+  }
   Serial.println("Waiting for input");
 }
 
 // the setup routine runs once when you press reset:
 void setup() {
-  // initialize the digital pin as an output.
-  pinMode(camera_pin, OUTPUT);
-  pinMode(board_pin, OUTPUT);
-  digitalWrite(camera_pin, HIGH);
-  digitalWrite(board_pin, HIGH);
-  Serial.begin(57600);
-  printHelp();
+}
+
+struct MatchBufferResult {
+  PinData * pin;
+  PinValueType value;
+};
+
+MatchBufferResult matchBufferToPin(PinData pin_list[], const size_t pins_count, const char* buffer ) {
+  MatchBufferResult res = {NULL, OFF};
+  for (size_t i = 0; i < pins_count; i++) {
+    if (!strcmp(buffer, pin_list[i].name_on)) {
+      res.pin = &pin_list[i];
+      res.value = ON;
+    }
+    else if (!strcmp(buffer, pin_list[i].name_off)) {
+      res.pin = &pin_list[i];
+      res.value = OFF;
+    }
+  }
+  return res;
 }
 
 // the loop routine runs over and over again forever:
 void loop() {
-
+  Serial.begin(57600);
+  PinData pins[] = {
+    { CAMERA_ON, CAMERA_OFF, camera_pin, ACTIVE_LOW, OFF },
+    { BOARD_ON, BOARD_OFF, board_pin, ACTIVE_LOW, OFF }
+  };
+  const size_t pins_count = sizeof(pins) / sizeof(pins[0]);
+  // initialize the digital pin as an output.
+  for (size_t i = 0; i < pins_count; i++) {
+    pinMode(pins[i].pin, OUTPUT);
+    changePin(pins[i], pins[i].value);
+  }
+  printHelp(pins, pins_count);
   char buffer[MAX_STRLEN];
   uint8_t index = 0;
   while(1) {
@@ -65,26 +124,15 @@ void loop() {
         continue;
       else {
         buffer[index % MAX_STRLEN] = '\0';
-        if (!strcmp(buffer, CAMERA_ON)) {
-          digitalWrite(camera_pin, LOW);
-          Serial.println(CAMERA_ON);
-        }
-        else if (!strcmp(buffer, CAMERA_OFF)) {
-          digitalWrite(camera_pin, HIGH);
-          Serial.println(CAMERA_OFF);
-        }
-        else if (!strcmp(buffer, BOARD_ON)) {
-          digitalWrite(board_pin, LOW);
-          Serial.println(BOARD_ON);
-        }
-        else if (!strcmp(buffer, BOARD_OFF)) {
-          digitalWrite(board_pin, HIGH);
-          Serial.println(BOARD_OFF);
+        MatchBufferResult match = matchBufferToPin(pins, pins_count, buffer);
+
+        if (match.pin) {
+          changePin(*match.pin, match.value);
         }
         else {
           Serial.print(buffer);
           Serial.println(" Not an option");
-          printHelp();
+          printHelp(pins, pins_count);
         }
         index = 0;
         break;
