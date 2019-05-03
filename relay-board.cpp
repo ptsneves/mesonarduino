@@ -93,7 +93,7 @@ MatchBufferResult matchBufferToPin(PinData pin_list[], const size_t pins_count, 
 
 // the loop routine runs over and over again forever:
 void loop() {
-  Serial.begin(57600);
+  Serial.begin(115200);
   PinData pins[] = {
     { CAMERA_ON, CAMERA_OFF, camera_pin, ACTIVE_LOW, OFF },
     { BOARD_ON, BOARD_OFF, board_pin, ACTIVE_LOW, OFF }
